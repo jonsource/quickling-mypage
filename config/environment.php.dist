@@ -1,0 +1,12 @@
+<?php
+
+/*----------------------------------------------------*/
+// Define your environments
+/*----------------------------------------------------*/
+return array(
+
+    'local'         => 'jon-PC',
+    'development'    => 'leela.mfcc.cz'
+    //'production'    => 'leela.mfcc.cz'
+
+);

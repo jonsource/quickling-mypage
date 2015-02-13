@@ -1,0 +1,24 @@
+
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+RewriteBase /
+# If running in a sub directory, use this:
+# RewriteBase /sub_dir/
+
+RewriteRule ^index\.php$ - [L]
+
+RewriteRule ^cms/?$ /cms/wp-login.php [L]
+# If running in a sub directory, use this:
+# RewriteRule ^cms/?$ /sub_dir/cms/wp-login.php [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule . /index.php [L]
+# If running in a sub directory, use this:
+# RewriteRule . /sub_dir/index.php [L]
+</IfModule>
+
+# END WordPress
