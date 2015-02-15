@@ -9,6 +9,13 @@ composer.lock
 ### IDE
 .idea/
 
+### Vagrant and PuPHPet
+.vagrant
+/puphpet/*
+!/puphpet/config.yaml
+!/puphpet/keep
+
+
 ### Wordpress
 /htdocs/cms/*
 !/htdocs/cms/.gitkeep
