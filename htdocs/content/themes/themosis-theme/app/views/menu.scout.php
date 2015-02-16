@@ -3,8 +3,9 @@
         <span class="QL-logo gold">QL</span>
         <nav>
             <a data-ql-container=".ql-container" href="/" >front</a>
-            <a data-ql-container=".ql-cont.col-70" href="/themosis">themosis</a>
-            <a data-ql-container=".ql-cont.col-70" href="/quickling">quickling</a>
+            <a data-ql-container=".ql-cont.col-70" href="/themosis/">themosis</a>
+            <a data-ql-container=".ql-cont.col-70" href="/quickling/">quickling</a>
+            <a data-ql-container=".ql-cont.col-70" href="/about">about</a>
         </nav>
     </div>
 </div>
