@@ -147,10 +147,17 @@ function loadIt(href,cont)
     {	console.log('getting: '+href);
         addLoader($target);
         startLoader($target);
-        $.get(href, function(data) {
-            finishLoader($target);
-            QL_cache[href]=data;
-            applyIt($target, $(QL_cache[href]));
+
+        $.ajax({
+            type: 'GET',
+            url: href,
+            headers: {"X-QL-Update": "1"},
+            success: function(data) {
+                finishLoader($target);
+                QL_cache[href]=data;
+                applyIt($target, $(QL_cache[href]));
+            }
+
         });
     }
 }
@@ -184,7 +191,7 @@ function getEm($scope) {
 
     $as.on('click', function(e) {
         var $tgt = $(e.target);
-        var href = $tgt.attr('href')+'?update=1';
+        var href = $tgt.attr('href');
         if(href.search('http')===0) {
             return true;
         }

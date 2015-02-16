@@ -1,4 +1,4 @@
-@if($first_load)
+@if(!isset($is_update) || !$is_update)
 
     @include('head')
 
@@ -13,7 +13,7 @@
             </div>
         </div>
     </div>
-@if($first_load)
+@if(!isset($is_update) || !$is_update)
 
     @include('footer')
     @include('foot')
