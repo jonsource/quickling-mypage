@@ -5,21 +5,17 @@ $.fn.redraw = function(){ return $(this).each(function(){ var redraw = this.offs
 
 QL_cache = {};
 
-
-function addTransIfNeeded($data) {
-    if ($data.length === 1 && $($data[0]).hasClass("ql-trans-container")) {
-        return $data;
-    } else {
-        return $('<div class="ql-trans-container">').append($data);
-    }
-}
-
 function prepareData($data,$target)
-{   if($target.ql_exact) {
+{   console.log(['exact',$target.ql_exact]);
+    if($target.ql_exact) {
+        //console.log(['data',$data]);
         var $node = $data.find($target.ql_exact);
+        //console.log(['node',$node]);
         if($node.length) {
-            $data = $node;
-            console.log(['exact data',$data]);
+            var $siblings = $node.siblings();
+            //console.log(['siblings',$siblings]);
+            $data = $siblings.add($node);
+            //console.log(['exact data',$data]);
         }
     }
     var encapsulated = [];
@@ -47,17 +43,33 @@ function applyIt($target,$data) {
     }
 
     var $anchors = prepareData($data,$target); /* TODO: handle more anchor points */
-    console.log($anchors);
+    //console.log($anchors);
+
     $.each($anchors,function(i,$new) {
+        var tmp;
+        if($new.data('ql-name')) {
+             tmp = $('[data-ql-name="'+$new.data('ql-name')+'"]');
+        }
+        if(tmp.length) {
+            var $targ = $(tmp[0]);
+            //console.log(['target',$targ]);
+        } else {
+            $targ = $target;
+        }
+        var $wr = $targ.clone();
+        $wr.children().remove();
+        $wr.addClass('transition-wrap');
+        var $wrap = $targ.wrapAll($wr).parent();
+        $wrap.css('height',$targ.outerHeight());
 
-        var $wrap = $target.wrapAll('<div class="transition-wrap">').parent();
-
-        $target.addClass('animated ' + tr_out);
-        $target.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-            $target.remove();
+        $targ.addClass('animated ' + tr_out);
+        $targ.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+            $targ.remove();
             $wrap.append($new);
             getEm($wrap);
             $new.addClass('animated '+tr_in);
+            $wrap.css('height',$new.css('height'));
+            resizeSection($new.closest('.section'));
             $new.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
                 $new.removeClass('animated');
                 $new.unwrap();
@@ -67,7 +79,7 @@ function applyIt($target,$data) {
 }
 
 function addLoader($target) {
-    console.log('add loader',$target);
+    //console.log('add loader',$target);
     if(!$target.ql_loader) {
         var $bar = $('<div class="bar"></div>');
         var $loader = $('<div class="ql-loader"></div>');
@@ -154,7 +166,16 @@ function loadIt(href,cont)
             headers: {"X-QL-Update": "1"},
             success: function(data) {
                 finishLoader($target);
-                QL_cache[href]=data;
+                console.log(['ajax',data]);
+                /* pretty print, TODO: future hook for callbacks */
+                var $data = $(data);
+                var $pres = $data.find('pre.prettyprint');
+                $pres.each(function(i,e){
+                    $e = $(e);
+                    $e.html(PR.prettyPrintOne($e.html()));
+                });
+                console.log($data.prop('outerHTML'));
+                QL_cache[href]=$data.prop('outerHTML');
                 applyIt($target, $(QL_cache[href]));
             }
 
@@ -163,9 +184,9 @@ function loadIt(href,cont)
 }
 
 function followLink(href,$tgt) {
-    var cont;
-    if($tgt && (cont = $tgt.data('ql-container'))) {
-        loadIt(href,cont);
+    if($tgt && $tgt.data('ql-target')) {
+        console.log(['follow link',$tgt.data('ql-target')]);
+        loadIt(href,$tgt.data('ql-target'));
     } else {
         loadIt(href);
     }
@@ -177,10 +198,10 @@ function getEm($scope) {
     $as = $scope.find('a');
     $as.each(function() {
         //console.log([$scope,this,$scope.selector]);
-        if(!$(this).data('ql-container')) {
+        if(!$(this).data('ql-target')) {
             var cls=$scope.attr('class');
             if(cls) {
-                $(this).data('ql-container', '.' + cls.split(' ').join('.'));
+                $(this).data('ql-target', '.' + cls.split(' ').join('.'));
             } else {
                 console.log(['scope without class',$scope]);
             }
@@ -195,6 +216,7 @@ function getEm($scope) {
         if(href.search('http')===0) {
             return true;
         }
+        console.log('click');
         e.preventDefault();
         window.history.pushState(href,'ignored', $tgt.attr('href'));
         return followLink(href,$tgt);
@@ -226,6 +248,17 @@ function prepareMenu($scope,sel) {
     }
 }
 
+function resizeSection($e) {
+    var $c = $($e.find('.container')[0]);
+    $e.css('height',$c.outerHeight());
+}
+
+function resizeSections() {
+    $('.section').each(function(i,e) {
+        resizeSection($(e));
+    });
+}
+
 function onPopState(event) {
     console.log(event);
     followLink(event.state);
@@ -234,4 +267,6 @@ function onPopState(event) {
 $(function() {
 	getEm($('body'));
     window.onpopstate = onPopState;
+    resizeSections();
+    $(window).resize(resizeSections);
 });
