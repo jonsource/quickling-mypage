@@ -1,272 +1,276 @@
 console.log('QuickLing');
 
-$ = jQuery;
-$.fn.redraw = function(){ return $(this).each(function(){ var redraw = this.offsetHeight; }); };
+var Quickling = {
 
-QL_cache = {};
+    defaults: {
+        menu_selector: 'nav',
+        loader_bar: 'relative',
+        debug: false
+    },
 
-function prepareData($data,$target)
-{   console.log(['exact',$target.ql_exact]);
-    if($target.ql_exact) {
-        //console.log(['data',$data]);
-        var $node = $data.find($target.ql_exact);
-        //console.log(['node',$node]);
-        if($node.length) {
-            var $siblings = $node.siblings();
-            //console.log(['siblings',$siblings]);
-            $data = $siblings.add($node);
-            //console.log(['exact data',$data]);
-        }
-    }
-    var encapsulated = [];
-    $data.each(function(i,e) {
-        //console.log(e);
-        var $e = $(e);
-        if($e.data('ql-target')) {
-            encapsulated.push($e);
-        };
-    });
-    if(!encapsulated.length) {
-        encapsulated.push($data);
-    }
-    return encapsulated;
-}
+    init: function(opts) {
+        Quickling.$ = $(Quickling);
+        Quickling.cache = {};
+        Quickling.opts = {};
+        $.extend(Quickling.opts,Quickling.defaults,opts);
+    },
 
-function applyIt($target,$data) {
-    console.log(['apply it',$target,$data]);
-    if(!$target.data('ql-transition') ) {
-        tr_in = 'fadeIn';
-        tr_out = 'fadeOut';
-    } else {
-        tr_in = $target.data('ql-transition').replace('%i%','In');
-        tr_out = $target.data('ql-transition').replace('%i%','Out');
-    }
-
-    var $anchors = prepareData($data,$target); /* TODO: handle more anchor points */
-    //console.log($anchors);
-
-    $.each($anchors,function(i,$new) {
-        var tmp;
-        if($new.data('ql-name')) {
-             tmp = $('[data-ql-name="'+$new.data('ql-name')+'"]');
-        }
-        if(tmp.length) {
-            var $targ = $(tmp[0]);
-            //console.log(['target',$targ]);
-        } else {
-            $targ = $target;
-        }
-        var $wr = $targ.clone();
-        $wr.children().remove();
-        $wr.addClass('transition-wrap');
-        var $wrap = $targ.wrapAll($wr).parent();
-        $wrap.css('height',$targ.outerHeight());
-
-        $targ.addClass('animated ' + tr_out);
-        $targ.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-            $targ.remove();
-            $wrap.append($new);
-            getEm($wrap);
-            $new.addClass('animated '+tr_in);
-            $wrap.css('height',$new.css('height'));
-            resizeSection($new.closest('.section'));
-            $new.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                $new.removeClass('animated');
-                $new.unwrap();
-            });
-        });
-    });
-}
-
-function addLoader($target) {
-    //console.log('add loader',$target);
-    if(!$target.ql_loader) {
-        var $bar = $('<div class="bar"></div>');
-        var $loader = $('<div class="ql-loader"></div>');
-        $bar.width('0%');
-        $target.prepend($loader.append($bar))
-        $target.ql_loader = $loader;
-        $target.ql_loader.bar = $bar;
-    }
-}
-
-function updateLoader($target) {
-    //console.log('update loader');
-    var progress = parseInt($target.ql_loader.bar[0].style.width);
-    var add = (100 - progress) / 5;
-    //console.log([progress,add]);
-    moveLoader($target,progress+add);
-    //$target.ql_loader.bar.css('width',progress+add+'%');
-}
-
-function moveLoader($target,percent) {
-    $target.ql_loader.bar.css('width',percent+'%');
-}
-
-function startLoader($target) {
-    //console.log('start loader');
-    setTimeout(function() { updateLoader($target) }, 1);
-    $target.ql_loader.interval = setInterval(function() {
-        updateLoader($target);
-    },300);
-}
-
-function removeLoader($target) {
-    //console.log('remove loader');
-    $target.ql_loader.bar.css('height','0');
-    setTimeout(function() {
-        $target.ql_loader.remove();
-        $target.ql_loader = null;
-    },350);
-}
-
-function finishLoader($target) {
-    //console.log('finish loader');
-    clearInterval($target.ql_loader.interval);
-    setTimeout(function() { $target.ql_loader.bar.css('width','100%'); },1 );
-    setTimeout(function() {
-        //removeLoader($target);
-    },350);
-}
-
-function loadIt(href,cont)
-{   var $target = $(cont);
-    var instead;
-    if(!$target || !$target.length) {
-        $target=$('.ql-container');
-        instead='.ql-container';
-        if(!$target.length) {
-            $target=$('body');
-            instead='body';
-        }
-        console.log('QL: No element ('+cont+') found. Using ('+instead+')');
-        $target.ql_exact = false;
-    } else {
-        /*if($target.length>1) {
-            $target = $($target[0]);
-        }*/
-        $target.ql_exact = cont;
-        console.log('target '+cont);
-    }
-
-    //console.log($target);
-
-    if(QL_cache[href])
-    {	console.log('using cache for: '+href);
-        applyIt($target, $(QL_cache[href]));
-    }
-    else
-    {	console.log('getting: '+href);
-        addLoader($target);
-        startLoader($target);
-
-        $.ajax({
-            type: 'GET',
-            url: href,
-            headers: {"X-QL-Update": "1"},
-            success: function(data) {
-                finishLoader($target);
-                console.log(['ajax',data]);
-                /* pretty print, TODO: future hook for callbacks */
-                var $data = $(data);
-                var $pres = $data.find('pre.prettyprint');
-                $pres.each(function(i,e){
-                    $e = $(e);
-                    $e.html(PR.prettyPrintOne($e.html()));
-                });
-                console.log($data.prop('outerHTML'));
-                QL_cache[href]=$data.prop('outerHTML');
-                applyIt($target, $(QL_cache[href]));
+    prepareData: function ($data, $target) {
+        if(Quickling.opts.debug) console.log(['exact', $target.ql_exact]);
+        if ($target.ql_exact) {
+            //console.log(['data',$data]);
+            var $node = $data.find($target.ql_exact);
+            //console.log(['node',$node]);
+            if ($node.length) {
+                var $siblings = $node.siblings();
+                //console.log(['siblings',$siblings]);
+                $data = $siblings.add($node);
+                //console.log(['exact data',$data]);
             }
-
+        }
+        var encapsulated = [];
+        $data.each(function (i, e) {
+            //console.log(e);
+            var $e = $(e);
+            if ($e.data('ql-target')) {
+                encapsulated.push($e);
+            }
+            ;
         });
-    }
-}
+        if (!encapsulated.length) {
+            encapsulated.push($data);
+        }
+        return encapsulated;
+    },
 
-function followLink(href,$tgt) {
-    if($tgt && $tgt.data('ql-target')) {
-        console.log(['follow link',$tgt.data('ql-target')]);
-        loadIt(href,$tgt.data('ql-target'));
-    } else {
-        loadIt(href);
-    }
-    return false;
-}
+    applyIt: function ($target, $data) {
+        if(Quickling.opts.debug) console.log(['apply it', $target, $data]);
 
-function getEm($scope) {
-    console.log('getEm');
-    $as = $scope.find('a');
-    $as.each(function() {
-        //console.log([$scope,this,$scope.selector]);
-        if(!$(this).data('ql-target')) {
-            var cls=$scope.attr('class');
-            if(cls) {
-                $(this).data('ql-target', '.' + cls.split(' ').join('.'));
+        var $anchors = Quickling.prepareData($data, $target);
+
+        $.each($anchors, function (i, $new) {
+            var tmp;
+            var tr_in,tr_out;
+            if ($new.data('ql-name')) {
+                tmp = $('[data-ql-name="' + $new.data('ql-name') + '"]');
+            }
+            if (tmp.length) {
+                var $targ = $(tmp[0]);
+                //console.log(['target',$targ]);
             } else {
-                console.log(['scope without class',$scope]);
+                $targ = $target;
             }
-        }
-    });
 
-    prepareMenu($scope);
+            if($new.html()==$targ.html()) return;
 
-    $as.on('click', function(e) {
-        var $tgt = $(e.target);
-        var href = $tgt.attr('href');
-        if(href.search('http')===0) {
-            return true;
-        }
-        console.log('click');
-        e.preventDefault();
-        window.history.pushState(href,'ignored', $tgt.attr('href'));
-        return followLink(href,$tgt);
-	});
-}
+            if (!$targ.data('ql-transition')) {
+                if(Quickling.opts.debug) console.log(['normal transition',$targ.attr('class')]);
+                tr_in = 'fadeIn';
+                tr_out = 'fadeOut';
+            } else {
+                if(Quickling.opts.debug) console.log(['custom transition',$targ.attr('class')]);
+                var parts = $targ.data('ql-transition').split('/');
+                tr_in = parts[0];
+                if(parts.length>1) tr_out = parts[1];
+                else tr_out = parts[0];
+                tr_in = tr_in.replace('%i%', 'In');
+                tr_out = tr_out.replace('%i%', 'Out');
+            }
 
-function prepareMenu($scope,sel) {
-    //console.log(window.location);
-    if(!sel) sel = 'nav';
-    var nav = $scope.find(sel);
-    if (nav.length) {
-        nav.each(function () {
-            var $nav = $(this);
-            var $as = $nav.find('a');
-            $as.on('click', function (e) {
-                e.preventDefault();
-                var $tgt = $(e.target);
-                $nav.find('a').removeClass('active');
-                $tgt.addClass('active');
-            });
-            $as.each(function(i,e) {
-                var $e = $(e);
-                var href=$e.attr('href');
-                if(href==window.location.href || href==window.location.pathname || (href+'/')==window.location.pathname) {
-                    $e.addClass('active');
-                }
+            var $wr = $targ.clone();
+            $wr.children().remove();
+            $wr.addClass('transition-wrap');
+            var $wrap = $targ.wrapAll($wr).parent();
+            $wrap.css('height', $targ.outerHeight());
+
+            $targ.addClass('animated ' + tr_out);
+            $targ.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                $targ.remove();
+                $wrap.append($new);
+                Quickling.getEm($wrap);
+                $new.addClass('animated ' + tr_in);
+                $wrap.css('height', $new.css('height'));
+                resizeSection($new.closest('.section'));
+                $new.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                    $new.removeClass('animated');
+                    $new.unwrap();
+                });
             });
         });
+    },
+
+    addLoader: function ($target) {
+        //console.log('add loader',$target);
+        if (!$target.ql_loader) {
+            var $bar = $('<div class="bar"></div>');
+            var $loader = $('<div class="ql-loader"></div>');
+            $bar.width('0%');
+            $target.prepend($loader.append($bar))
+            $target.ql_loader = $loader;
+            $target.ql_loader.bar = $bar;
+        }
+    },
+
+    updateLoader: function ($target) {
+        //console.log('update loader');
+        var progress = parseInt($target.ql_loader.bar[0].style.width);
+        var add = (100 - progress) / 5;
+        //console.log([progress,add]);
+        Quickling.moveLoader($target, progress + add);
+        //$target.ql_loader.bar.css('width',progress+add+'%');
+    },
+
+    moveLoader: function ($target, percent) {
+        $target.ql_loader.bar.css('width', percent + '%');
+    },
+
+    startLoader: function ($target) {
+        //console.log('start loader');
+        setTimeout(function () {
+            Quickling.updateLoader($target)
+        }, 1);
+        $target.ql_loader.interval = setInterval(function () {
+            Quickling.updateLoader($target);
+        }, 300);
+    },
+
+    removeLoader: function ($target) {
+        //console.log('remove loader');
+        $target.ql_loader.bar.css('height', '0');
+        setTimeout(function () {
+            $target.ql_loader.remove();
+            $target.ql_loader = null;
+        }, 350);
+    },
+
+    finishLoader: function ($target) {
+        //console.log('finish loader');
+        clearInterval($target.ql_loader.interval);
+        setTimeout(function () {
+            $target.ql_loader.bar.css('width', '100%');
+        }, 1);
+        setTimeout(function () {
+            //removeLoader($target);
+        }, 350);
+    },
+
+    loadIt: function (href, cont) {
+        var $target = $(cont);
+        var instead;
+        if (!$target || !$target.length) {
+            $target = $('.ql-container');
+            instead = '.ql-container';
+            if (!$target.length) {
+                $target = $('body');
+                instead = 'body';
+            }
+            if(Quickling.opts.debug) console.log('QL: No element (' + cont + ') found. Using (' + instead + ')');
+            $target.ql_exact = false;
+        } else {
+            /*if($target.length>1) {
+             $target = $($target[0]);
+             }*/
+            $target.ql_exact = cont;
+            if(Quickling.opts.debug) console.log('target ' + cont);
+        }
+
+        //console.log($target);
+
+        if (Quickling.cache[href]) {
+            if(Quickling.opts.debug) console.log('using cache for: ' + href);
+            Quickling.applyIt($target, $(Quickling.cache[href]));
+        }
+        else {
+            if(Quickling.opts.debug) console.log('getting: ' + href);
+            Quickling.addLoader($target);
+            Quickling.startLoader($target);
+
+            $.ajax({
+                type: 'GET',
+                url: href,
+                headers: {"X-QL-Update": "1"},
+                success: function (data) {
+                    Quickling.finishLoader($target);
+                    if(Quickling.opts.debug) console.log(['ajax', data]);
+                    var $data = $(data);
+                    Quickling.$.trigger('data.postLoad',[$data]);
+                    if(Quickling.opts.debug) console.log($data.prop('outerHTML'));
+                    Quickling.cache[href] = $data.prop('outerHTML');
+                    Quickling.applyIt($target, $(Quickling.cache[href]));
+                }
+
+            });
+        }
+    },
+
+    followLink: function (href, $tgt) {
+        if ($tgt && $tgt.data('ql-target')) {
+            if(Quickling.opts.debug) console.log(['follow link', $tgt.data('ql-target')]);
+            Quickling.loadIt(href, $tgt.data('ql-target'));
+        } else {
+            Quickling.loadIt(href);
+        }
+        return false;
+    },
+
+    getEm: function ($scope) {
+        if(Quickling.opts.debug) console.log('getEm');
+        var $as = $scope.find('a');
+        $as.each(function () {
+            //console.log([$scope,this,$scope.selector]);
+            if (!$(this).data('ql-target')) {
+                var cls = $scope.attr('class');
+                if (cls) {
+                    $(this).data('ql-target', '.' + cls.split(' ').join('.'));
+                } else {
+                    if(Quickling.opts.debug) console.log(['scope without class', $scope]);
+                }
+            }
+        });
+
+        Quickling.prepareMenu($scope);
+
+        $as.on('click', function (e) {
+            var $tgt = $(e.target);
+            var href = $tgt.attr('href');
+            if($tgt.data('ql-external')) {
+                if(Quickling.opts.debug) console.log('forced external link');
+                return true;
+            }
+            if(href.search('http') === 0 && !Quickling.opts.root
+                || href.search(Quickling.opts.root)===-1) {
+                if(Quickling.opts.debug) console.log('detected external link');
+                return true;
+            }
+            if(Quickling.opts.debug) console.log('click');
+            e.preventDefault();
+            window.history.pushState(href, 'ignored', $tgt.attr('href'));
+            return Quickling.followLink(href, $tgt);
+        });
+    },
+
+    prepareMenu: function ($scope, sel) {
+        //console.log(window.location);
+        if (!sel) sel = Quickling.opts.menu_selector;
+        var nav = $scope.find(sel);
+        if (nav.length) {
+            nav.each(function () {
+                var $nav = $(this);
+                var $as = $nav.find('a');
+                $as.on('click', function (e) {
+                    //e.preventDefault();
+                    var $tgt = $(e.target);
+                    $nav.find('a').removeClass('active');
+                    $tgt.addClass('active');
+                });
+                $as.each(function (i, e) {
+                    var $e = $(e);
+                    var href = $e.attr('href');
+                    if (href == window.location.href || href == window.location.pathname || (href + '/') == window.location.pathname) {
+                        $e.addClass('active');
+                    }
+                });
+            });
+        }
     }
 }
-
-function resizeSection($e) {
-    var $c = $($e.find('.container')[0]);
-    $e.css('height',$c.outerHeight());
-}
-
-function resizeSections() {
-    $('.section').each(function(i,e) {
-        resizeSection($(e));
-    });
-}
-
-function onPopState(event) {
-    console.log(event);
-    followLink(event.state);
-}
-		
-$(function() {
-	getEm($('body'));
-    window.onpopstate = onPopState;
-    resizeSections();
-    $(window).resize(resizeSections);
-});

@@ -43,8 +43,8 @@ vagrantfile-local:
                 group: www-data
                 source: ./
                 target: /var/www
-                sync_type: default
-                rsync:
+                sync_type: nfs
+                nfs:
                     args:
                         - '--verbose'
                         - '--archive'

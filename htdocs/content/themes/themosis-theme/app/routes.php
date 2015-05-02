@@ -18,6 +18,18 @@ Route::get('front', function($post){
     return View::make('front',array('post'=>$post));
 });
 
+Route::get('page', array('themosis',function($page){
+    $posts = get_posts( array('category_name'=>'on-themosis') );
+    return View::make('category',array('page'=>$page, 'posts'=>$posts));
+}));
+
+Route::get('single', function($post){
+    $cats = wp_get_post_categories( $post->ID );
+    if(sizeof($cats)) $cats = $cats[0];
+    $posts = get_posts( array('category'=>$cats) );
+    return View::make('category',array('page'=>$post, 'posts'=>$posts));
+});
+
 Route::get('page', function($post){
     $sidebar = null;
     $title = $post->post_title;
@@ -32,24 +44,27 @@ Route::get('page', function($post){
     }
 
     return View::make('page',array('post'=>$post, 'sidebar'=>$sidebar));
-
 });
 
 Route::any('404', function($post){
     $custom_routes = array(
         '/about'=> 'CustomController@about',
+        '/about/more'=> function() { return View::make('templates.about-more'); },
     );
 
-    $uri = $_SERVER["REQUEST_URI"];
-    $parts = explode('?',$uri);
-    $path = $parts[0];
+    $parts = explode('?',$_SERVER["REQUEST_URI"]);
+    $path = str_replace(array('localhost/','htdocs/','mypage/'),'',$parts[0]);
     if(array_key_exists($path, $custom_routes))
-    {   status_header(200);
-        if(is_string($custom_routes[$path])) {
+    {
+        status_header(200);
+        if(is_string($custom_routes[$path]))
+        {
             $call_parts = explode('@',$custom_routes[$path]);
             $controller = new $call_parts[0];
             return $controller->$call_parts[1](null,null);
-        } else if(is_callable($custom_routes[$path])) {
+        }
+        else if(is_callable($custom_routes[$path]))
+        {
             return $custom_routes[$path](null, null);
         }
     }

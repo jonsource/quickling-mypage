@@ -4,7 +4,7 @@
     @section('main')
         <h1>{{$post->post_title}}</h1>
         <p>{{$post->post_content}}</p>
-    @stop
+@stop
 @endif
 
 @if($sidebar)
