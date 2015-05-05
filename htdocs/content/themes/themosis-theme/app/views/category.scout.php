@@ -9,8 +9,12 @@
 
 @if($posts)
     @section('sidebar')
+        <ul>
         @foreach($posts as $post)
-            <a data-ql-target=".ql-cont" href="/{{$post->post_name}}">{{$post->post_title}}</a><br>
+            <li>
+            <a data-ql-target=".ql-cont" href="{{path()}}/{{$post->post_name}}">{{$post->post_title}}</a>
+            </li>
         @endforeach
+        </ul>
     @stop
 @endif

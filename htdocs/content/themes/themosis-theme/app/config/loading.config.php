@@ -12,6 +12,7 @@ return array(
     // Controllers
     'BaseController'        => themosis_path('app').'controllers'.DS.'BaseController.php',
     'CustomController'      => themosis_path('app').'controllers'.DS.'CustomController.php',
+    'ApiController'      => themosis_path('app').'controllers'.DS.'ApiController.php',
 
     // Models
     'PostModel'             => themosis_path('app').'models'.DS.'PostModel.php',

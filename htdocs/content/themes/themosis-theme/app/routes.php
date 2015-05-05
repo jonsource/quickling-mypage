@@ -19,14 +19,14 @@ Route::get('front', function($post){
 });
 
 Route::get('page', array('themosis',function($page){
-    $posts = get_posts( array('category_name'=>'on-themosis') );
+    $posts = get_posts( array('posts_per_page'=>-1,'category_name'=>'on-themosis') );
     return View::make('category',array('page'=>$page, 'posts'=>$posts));
 }));
 
 Route::get('single', function($post){
     $cats = wp_get_post_categories( $post->ID );
     if(sizeof($cats)) $cats = $cats[0];
-    $posts = get_posts( array('category'=>$cats) );
+    $posts = get_posts( array('posts_per_page'=>-1,'category'=>$cats) );
     return View::make('category',array('page'=>$post, 'posts'=>$posts));
 });
 
@@ -46,14 +46,15 @@ Route::get('page', function($post){
     return View::make('page',array('post'=>$post, 'sidebar'=>$sidebar));
 });
 
-Route::any('404', function($post){
+Route::any('404', function(){
     $custom_routes = array(
         '/about'=> 'CustomController@about',
         '/about/more'=> function() { return View::make('templates.about-more'); },
     );
 
     $parts = explode('?',$_SERVER["REQUEST_URI"]);
-    $path = str_replace(array('localhost/','htdocs/','mypage/'),'',$parts[0]);
+    $path = str_replace(array('htdocs/','mypage/'),'',$parts[0]);
+
     if(array_key_exists($path, $custom_routes))
     {
         status_header(200);
@@ -68,5 +69,16 @@ Route::any('404', function($post){
             return $custom_routes[$path](null, null);
         }
     }
+
+    $path_parts = explode('/',$path);
+    if($path_parts[1]=='api') {
+        $controller = 'ApiController';
+        $model = null;
+        $id = null;
+        if(isset($path_parts[2])) $model = $path_parts[2];
+        if(isset($path_parts[3])) $id = $path_parts[3];
+        return call_user_func($controller.'::route',$model,$id);
+    }
+
     return View::make('404',array('path'=>$path));
 });

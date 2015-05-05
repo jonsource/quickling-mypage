@@ -225,6 +225,10 @@ h1:first-child, h1:first-of-type {
     text-align: center;
 }
 
+.col-30 li {
+    margin-bottom: 10px;
+}
+
 footer .container {
     line-height: 50px;
 }
