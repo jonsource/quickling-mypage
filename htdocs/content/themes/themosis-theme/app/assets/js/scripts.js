@@ -39,7 +39,7 @@ function pretty(event,$data) {
 $(function() {
     Quickling.init({debug:true,root:quickling_root});
     Quickling.$.on('data.postLoad',postLoad);
-    Quickling.$.on('data.postLoad',postApply);
+    Quickling.$.on('data.postApply',postApply);
     Quickling.getEm($('body'));
 
     window.onpopstate = onPopState;
