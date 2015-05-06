@@ -17,6 +17,16 @@ function onPopState(event) {
     Quickling.followLink(event.state);
 }
 
+function postApply(event,$data) {
+    ga('set', 'page', location.pathname);
+    ga('send', 'pageview');
+}
+
+function postLoad(event,$data) {
+    pretty(event,$data);
+
+}
+
 function pretty(event,$data) {
     console.log(['pretty',$data]);
     var $pres = $data.find('pre.prettyprint');
@@ -28,7 +38,8 @@ function pretty(event,$data) {
 
 $(function() {
     Quickling.init({debug:true,root:quickling_root});
-    Quickling.$.on('data.postLoad',pretty);
+    Quickling.$.on('data.postLoad',postLoad);
+    Quickling.$.on('data.postLoad',postApply);
     Quickling.getEm($('body'));
 
     window.onpopstate = onPopState;

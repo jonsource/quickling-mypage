@@ -97,6 +97,7 @@ var Quickling = {
                 });
             });
         });
+        Quickling.$.trigger('data.postApply',[$target,$data]);
     },
 
     addLoader: function ($target) {
