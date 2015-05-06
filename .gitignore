@@ -25,6 +25,7 @@ composer.lock
 /htdocs/content/uploads/
 /htdocs/content/upgrade/
 /config/environment.php
+/htdocs/.htaccess
 
 ### Environment Credentials
 .env.*.php
