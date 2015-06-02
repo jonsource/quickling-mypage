@@ -11,7 +11,7 @@
         </div>
         <div class="section gold">
             <div class="container centered">
-            &copy;{{date('Y')}} <a target="_blank" href="http://github.io/jonsource">jonsource</a>
+            &copy;{{date('Y')}} <a target="_blank" href="http://github.com/jonsource">jonsource</a>
             </div>
         </div>
 	</footer>
