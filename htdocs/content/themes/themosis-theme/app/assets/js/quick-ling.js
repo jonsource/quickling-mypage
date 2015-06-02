@@ -84,16 +84,20 @@ var Quickling = {
             $wrap.css('height', $targ.outerHeight());
 
             $targ.addClass('animated ' + tr_out);
-            $targ.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+            $targ.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function (e) {
                 $targ.remove();
                 $wrap.append($new);
                 Quickling.getEm($wrap);
                 $new.addClass('animated ' + tr_in);
                 $wrap.css('height', $new.css('height'));
                 resizeSection($new.closest('.section'));
-                $new.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                    $new.removeClass('animated');
-                    $new.unwrap();
+                $new.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function (e) {
+                        /* TODO: investigate why this is firing twice even if bound as $.one */
+                        if($new.hasClass('animated'))
+                        {
+                            $new.removeClass('animated');
+                            $new.unwrap();
+                        }
                 });
             });
         });
